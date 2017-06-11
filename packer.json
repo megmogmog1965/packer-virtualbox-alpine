@@ -1,0 +1,53 @@
+{
+  "variables": {
+    "password": "packer"
+  },
+  "builders": [
+    {
+      "type": "virtualbox-iso",
+      "iso_url": "https://nl.alpinelinux.org/alpine/v3.6/releases/x86_64/alpine-virt-3.6.1-x86_64.iso",
+      "iso_checksum": "f4421357ed2c969046b95cef6fc4844aeebfe8a2323049915dbe953d5f1d3c36",
+      "iso_checksum_type": "sha256",
+      "guest_os_type": "Linux26_64",
+      "ssh_username": "root",
+      "ssh_password": "{{user `password`}}",
+      "ssh_wait_timeout": "240s",
+      "vboxmanage": [
+        ["modifyvm", "{{.Name}}", "--memory", "1024"],
+        ["modifyvm", "{{.Name}}", "--cpus", "1"],
+        ["modifyvm", "{{.Name}}", "--audio", "none"],
+        ["modifyvm", "{{.Name}}", "--boot1", "disk"],
+        ["modifyvm", "{{.Name}}", "--boot2", "dvd"]
+      ],
+      "disk_size": "2048",
+      "http_directory": "http",
+      "boot_wait": "30s",
+      "boot_command": [
+        "root<enter><wait>",
+        "setup-interfaces<enter><wait><enter><wait><enter><wait><enter><wait>",
+        "/etc/init.d/networking start<enter><wait10>",
+        "wget http://{{ .HTTPIP }}:{{ .HTTPPort }}/answerfile<enter><wait5>",
+        "setup-alpine -f answerfile<enter><wait5>",
+        "{{user `password`}}<enter><wait>",
+        "{{user `password`}}<enter><wait>",
+        "<wait10><wait10><wait10><wait10><wait10><wait10>",
+        "y<enter><wait>",
+        "<wait10><wait10><wait10>",
+        "reboot<enter><wait>",
+        "<wait10><wait10><wait10>",
+        "root<enter><wait>",
+        "{{user `password`}}<enter><wait>",
+        "sed -i -e 's/^#http/http/g' /etc/apk/repositories<enter><wait>",
+        "echo 'PermitRootLogin yes' >> /etc/ssh/sshd_config<enter><wait>",
+        "/etc/init.d/sshd restart<enter><wait>"
+      ],
+      "shutdown_command": "poweroff"
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "shell",
+      "inline": ["echo 'You can do anything here. See https://www.packer.io/docs/provisioners/index.html'"]
+    }
+  ]
+}
