@@ -18,10 +18,9 @@ $ packer build packer.json
 ## Directory Layout
 
 ```
-.
+packer-virtualbox-alpine/
 ├── README.md
-├── http
-│   └── answerfile
+├── answerfile
 └── packer.json
 ```
 

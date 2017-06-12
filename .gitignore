@@ -1,6 +1,9 @@
+# Mac
+.DS_Store
+
 # Cache objects
 packer_cache/
-output-virtualbox-iso/
+output*/
 
 # For built boxes
 *.box

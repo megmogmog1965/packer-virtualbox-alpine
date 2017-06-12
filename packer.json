@@ -11,43 +11,48 @@
       "guest_os_type": "Linux26_64",
       "ssh_username": "root",
       "ssh_password": "{{user `password`}}",
-      "ssh_wait_timeout": "240s",
       "vboxmanage": [
         ["modifyvm", "{{.Name}}", "--memory", "1024"],
-        ["modifyvm", "{{.Name}}", "--cpus", "1"],
+        ["modifyvm", "{{.Name}}", "--cpus", "2"],
         ["modifyvm", "{{.Name}}", "--audio", "none"],
         ["modifyvm", "{{.Name}}", "--boot1", "disk"],
         ["modifyvm", "{{.Name}}", "--boot2", "dvd"]
       ],
       "disk_size": "2048",
-      "http_directory": "http",
       "boot_wait": "30s",
       "boot_command": [
         "root<enter><wait>",
+        "passwd<enter><wait>{{user `password`}}<enter><wait>{{user `password`}}<enter><wait>",
         "setup-interfaces<enter><wait><enter><wait><enter><wait><enter><wait>",
         "/etc/init.d/networking start<enter><wait10>",
-        "wget http://{{ .HTTPIP }}:{{ .HTTPPort }}/answerfile<enter><wait5>",
-        "setup-alpine -f answerfile<enter><wait5>",
-        "{{user `password`}}<enter><wait>",
-        "{{user `password`}}<enter><wait>",
-        "<wait10><wait10><wait10><wait10><wait10><wait10>",
-        "y<enter><wait>",
-        "<wait10><wait10><wait10>",
-        "reboot<enter><wait>",
-        "<wait10><wait10><wait10>",
-        "root<enter><wait>",
-        "{{user `password`}}<enter><wait>",
-        "sed -i -e 's/^#http/http/g' /etc/apk/repositories<enter><wait>",
+        "setup-sshd -c openssh<enter><wait>",
         "echo 'PermitRootLogin yes' >> /etc/ssh/sshd_config<enter><wait>",
-        "/etc/init.d/sshd restart<enter><wait>"
+        "/etc/init.d/sshd restart<enter><wait5>"
       ],
       "shutdown_command": "poweroff"
     }
   ],
   "provisioners": [
     {
+      "type": "file",
+      "source": "answerfile",
+      "destination": "/tmp/answerfile"
+    },
+    {
       "type": "shell",
-      "inline": ["echo 'You can do anything here. See https://www.packer.io/docs/provisioners/index.html'"]
+      "expect_disconnect": true,
+      "inline": [
+        "echo '{{user `password`}}\n{{user `password`}}\ny\n' | setup-alpine -f /tmp/answerfile",
+        "/etc/init.d/sshd stop && reboot"
+      ]
+    },
+    {
+      "type": "shell",
+      "expect_disconnect": true,
+      "pause_before": "10s",
+      "inline": [
+        "sed -i -e 's/^#http/http/g' /etc/apk/repositories"
+      ]
     }
   ]
 }
